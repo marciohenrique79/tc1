@@ -1,8 +1,6 @@
 from fastapi import FastAPI, HTTPException
-
-PROCESSAMENTO_VALIDOS = ('viniferas', 'americanas', 'uvas_de_mesa', 'sem_classificacao')
-IMPORTACAO_VALIDOS = ('vinhos_de_mesa', 'espumantes', 'uvas_frescas', 'uvas_passas', 'suco_de_uva')
-EXPORTACAO_VALIDOS = ('vinhos_de_mesa', 'espumantes', 'uvas_frescas', 'suco_de_uva')
+from vinicultura import raspagemTotal, raspagemUnit
+from vinicultura import PROCESSAMENTO_VALIDOS, IMPORTACAO_VALIDOS, EXPORTACAO_VALIDOS
 
 #Controle de vesão
 app = FastAPI(
@@ -20,14 +18,16 @@ async def boas_vindas():
     return {"message":"Embrapa - dados de Vinicultura"}
 
 @app.get("/producao")
-async def producao(ano=0):
+async def producao(ano:int=0):
     if ano:
         if ano in range(1970,2024):
-            return {"message":f"Dados de produção do ano {ano}"}
+            dados = raspagemUnit("opt_02",ano)
+            return {"message":f"Dados de produção do ano {ano}:{dados}"}
         else:
              raise HTTPException(status_code=404, detail="Não há dados para o ano solicitado!")        
     else:
-        return {"message":"Dados de produção de 1970 a 2023"}
+        dados = raspagemTotal("opt_02")
+        return {"message":f"Dados de produção de 1970 a 2023: {dados}"}
 
 @app.get("/processamento/{tipo}")
 async def processamento(tipo:str="viniferas",ano:int=0):
@@ -35,17 +35,20 @@ async def processamento(tipo:str="viniferas",ano:int=0):
         raise HTTPException(status_code=404, detail="Tipo de processamento não encontrado!")
     if ano:
         if ano in range(1970,2024):
-            return {"message":f"Dados de processamento de {tipo} ano {ano}"}
+            sub_opt = PROCESSAMENTO_VALIDOS.index(tipo.lower())+1
+            dados = raspagemUnit(f"opt_03&subopt_0{sub_opt}",ano)
+            return {"message":f"Dados de processamento de {tipo} ano {ano}:{dados}"}
         else:
              raise HTTPException(status_code=404, detail="Não há dados para o ano solicitado!")
     else:
         return {"message":f"Dados de processamento de {tipo} de 1970 a 2023"}
 
 @app.get("/comercializacao")
-async def comercializacao(ano=0):
+async def comercializacao(ano:int=0):
     if ano:
         if ano in range(1970,2024):
-            return {"message":f"Dados de comercialização do ano {ano}"}
+            dados = raspagemUnit("opt_04",ano)
+            return {"message":f"Dados de comercialização do ano {ano}:{dados}"}
         else:
              raise HTTPException(status_code=404, detail="Não há dados para o ano solicitado!")    
     else:
@@ -57,9 +60,11 @@ async def importacao(tipo:str="viniferas",ano:int=0):
         raise HTTPException(status_code=404, detail="Produto de importação não encontrado!")
     if ano:
         if ano in range(1970,2024):
-            return {"message":f"Dados de importação de {tipo} ano {ano}"}
+            sub_opt = IMPORTACAO_VALIDOS.index(tipo.lower())+1
+            dados = raspagemUnit(f"opt_05&subopt_0{sub_opt}",ano)
+            return {"message":f"Dados de importação de {tipo} ano {ano}:{dados}"}
         else:
-             raise HTTPException(status_code=404, detail="Não há dados para o ano solicitado!")        
+            raise HTTPException(status_code=404, detail="Não há dados para o ano solicitado!")        
     else:
         return {"message":f"Dados de importação de {tipo} de 1970 a 2023"}
     
@@ -69,10 +74,13 @@ async def exportacao(tipo:str="viniferas",ano:int=0):
         raise HTTPException(status_code=404, detail="Produto de exportação não encontrado!")
     if ano:
         if ano in range(1970,2024):
-            return {"message":f"Dados de exportação de {tipo} ano {ano}"}
+            sub_opt = EXPORTACAO_VALIDOS.index(tipo.lower())+1
+            dados = raspagemUnit(f"opt_06&subopt_0{sub_opt}",ano)
+            return {"message":f"Dados de exportação de {tipo} ano {ano}:{dados}"}
         else:
              raise HTTPException(status_code=404, detail="Não há dados para o ano solicitado!")        
     else:
+        # 
         return {"message":f"Dados de exportação de {tipo} de 1970 a 2023"}
     
 #if __name__ == "__main__":
